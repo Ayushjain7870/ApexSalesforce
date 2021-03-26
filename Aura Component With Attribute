@@ -1,0 +1,33 @@
+<!--Component-->
+<aura:component >
+    <aura:attribute name = 'aa' type = 'Decimal' default = '0'></aura:attribute>
+    <aura:attribute name = 'bb' type = 'Decimal' default = '0'></aura:attribute>
+    <aura:attribute name = 'sum' type = 'Decimal'>				  </aura:attribute>
+    <div>
+        <ui:inputNumber label="Enter Number" value="{!v.aa}"></ui:inputNumber>
+        <ui:inputNumber label="Enter Number" value="{!v.bb}"></ui:inputNumber>
+        <ui:inputNumber label="Enter Number" value="{!v.sum}"></ui:inputNumber>
+    </div>
+    
+    
+    <div>
+        <p>Add</p><lightning:button label = 'Add' onclick = '{!c.addMethod}'/>
+        <p>{!v.aa} + {!v.bb} = {!v.sum}</p>
+    </div>
+</aura:component>
+
+
+
+// JavaScript Controller
+
+({
+    addMethod : function(component, event, helper) {     
+        //Add numbers
+        var num1 = component.get("v.aa");
+        var num2 = component.get("v.bb");
+        var sumResult = num1 + num2;
+        component.set('v.sum', sumResult);
+        console.log(sumResult);
+        
+    }
+})
