@@ -1,0 +1,32 @@
+<!--Component-->
+
+<aura:component>
+    <!--This is component without attributes-->
+    <h1>This is an calculator</h1>
+    <br/>
+    <ui:inputNumber label="FirstNumber: " aura:id="fNum"/>
+    <br/>
+    <ui:inputNumber label="SecondNumber: " aura:id="sNum"/>
+    <br/>
+    <ui:inputNumber  label="Result : " aura:id="res"/>
+    <br/>
+    <ui:Button label="Calculate!" aura:id="calc" class="button" press="{!c.CalculateFunction}"/>
+
+</aura:component>
+
+<!--Controller-->
+
+({
+	CalculateFunction : function(component, event, helper) 
+    {
+        //Without using attributes we have to find the component by id
+        var fnum = component.find("fNum").get("v.value");
+        var snum = component.find("sNum").get("v.value");
+        var res  = component.find("res");
+        var cons = fnum + snum;
+        console.log("fnum+snum: " + cons);
+        res.set("v.value", cons);
+        	
+        console.log("Have a nice day!!");
+	}
+})
