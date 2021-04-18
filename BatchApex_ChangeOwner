@@ -1,0 +1,119 @@
+//This code changes the owner of the record to another user in batch -- This includes test class as well.
+global class BatchOwnerChanger implements Database.Batchable<sObject>
+{
+   
+    //public string Email;
+    //public Id fromuser = '0055g000007iNT0AAM';
+   	// public Id toUser ='0055g000002hJloAAE';
+    
+    public Id toUser = '0055g000007iNT0AAM';
+    public Id fromuser ='0055g000002hJloAAE';
+    global List<sObject> start(Database.BatchableContext BC)
+    {
+        List<sObject> scope = new List<sObject>();
+        scope.addAll([select ownerId from Account]);
+        scope.addAll([select OwnerId from Contact]);
+        return scope;
+    }
+    global void execute(Database.BatchableContext BC, List<sObject> scope)
+    {
+        for(sObject obj : scope)
+        {
+                        
+         switch on obj
+            {
+                when Account a
+                {
+                    If(a.ownerId==fromuser)
+                    {
+                        a.ownerId=toUser;
+                                           
+                        System.debug('DONE Accounts');
+                    }
+                }
+                when Contact c
+                {
+                    If(c.OwnerId == fromuser)
+                    {
+                        c.OwnerId = toUser;
+                        System.debug('DONE CONTACTS');
+                    }
+                }
+             }
+            update scope;
+         }
+     }
+
+    global void finish(Database.BatchableContext BC)
+    {
+        AsyncApexJob a = [SELECT Id, Status, NumberOfErrors, JobItemsProcessed,
+                          TotalJobItems, CreatedBy.Email FROM AsyncApexJob WHERE Id =:BC.getJobId()];
+        System.debug('The batch Apex job processed ' + a.TotalJobItems +' batches with '+ a.NumberOfErrors + ' failures.');
+        /*
+        Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+        String[] toAdd=new String[] {Email};     
+            mail.setToaddresses(toAdd);
+        mail.setReplyto('ayush.jain@mindruby.com');       /// Change the Email Id
+        mail.setSubject('Apex Sharing Recalculation ' + a.Status);
+        mail.setPlainTextBody('The batch Apex job processed ' + a.TotalJobItems +' batches with '+ a.NumberOfErrors + ' failures.');
+        Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
+		*/    
+}
+}
+
+//TEST METHOD
+
+@isTest
+public class BatchOwnerChangerTest 
+{
+	@testSetup static void setup ()
+    {
+        Account a = TestUtility_CreateData.prepareAccount('AyushJain');
+        insert a;
+        List<Contact> lstCon= TestUtility_CreateData.prepareContactList('Ayush',50, a.Id);
+        insert lstCon;
+    }
+    public static testMethod void test1()
+    {
+        Test.startTest();
+        Id batchId = Database.executeBatch(new BatchOwnerChanger(),100);
+        Test.stopTest();
+    }
+}
+
+
+//TestUtility_CreateData
+
+@IsTest
+public class TestUtility_CreateData
+{
+    public static Account prepareAccount(String NameOfAcc)
+    {
+        Account acc = new Account(Name = NameOfAcc);
+        return acc;
+    }
+    public static List<Account> prepareAccountList(String NameOfAcc, integer numOfAccs)
+    {
+        List<account> lstAcc = new List<Account>();
+        for(integer i =0 ; i< numOfAccs ; i++)
+        {
+            Account a = new Account(Name = NameOfAcc + i);
+            lstAcc.add(a);
+        }
+        return lstAcc;
+    }
+    public static List<Contact> prepareContactList(String NameOfAcc, integer numOfAccs, Id AccId)
+    {
+        List<Contact> lstCon = new List<Contact>();
+        for(integer i =0 ; i< numOfAccs ; i++)
+        {
+            Contact c= new Contact(LastName = NameOfAcc + i, FirstName = NameOfAcc, AccountId = AccId);
+            lstCon.add(c);
+        }
+        return lstCon;
+    }
+
+}
+
+
+
