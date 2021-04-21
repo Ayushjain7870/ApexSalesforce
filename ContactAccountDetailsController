@@ -1,0 +1,791 @@
+public with sharing class ContactAccountDetailsControllerApex 
+{
+    //wrapper class to send details
+    public class ContactAccountDetailsUnit
+    {      
+        @AuraEnabled public string rowHeader{get;set;}
+        @AuraEnabled public string rowData{get;set;}
+        //@AuraEnabled public boolean borderSet{get;set;}
+       // @AuraEnabled public string borderData{get;set;}
+        
+    }
+    
+    public static Id oppContactId;
+  
+    @AuraEnabled(cacheable=false)
+    public static List<List<ContactAccountDetailsUnit>> getWrapperList(Id oppId)
+    {
+        String OpportunityName;       
+        List<Opportunity> lstOpp = [SELECT AccountId, Contact__c, Name, Id FROM OPPORTUNITY WHERE Id=:oppId];
+        
+        if(lstOpp.size()>0)
+        {
+           
+            Opportunity opp  = lstOpp[0]; 
+            //oppAccountId = opp.AccountId;
+            OpportunityName = opp.Name;
+            oppContactId = opp.Contact__c;
+            System.debug(oppContactId);
+        }
+		 
+        //Contact Section
+        //Getting Required Fields
+        /*List<Contact> lstCon = [SELECT Name,  
+                                Ownership_type_1__c, Ownership_type_2__c, Ownership_type_3__c,
+                                Estimated_Market_value__c, Estimated_Market_value_1__c, Estimated_Market_value_2__c,
+                                Address__c, Address_1__c, Address_2__c                             
+                                FROM Contact WHERE Id=:oppContactID];*/
+        //The related contact of any opportunity will always be 1
+        Contact c_single = 	  [SELECT Name,  
+                                Ownership_type_1__c, Ownership_type_2__c, Ownership_type_3__c,
+                                Estimated_Market_value__c, Estimated_Market_value_1__c, Estimated_Market_value_2__c,
+                                Address__c, Address_1__c, Address_2__c,
+                                Property_Type_ho1__c, Property_Type_ho2__c, Property_Type_ho3__c,
+                               	Present_Value_ho1__c, 	Present_Value_ho2__c, 	Present_Value_ho3__c,
+                                Address_ho1__c, Address_ho2__c, Address_ho3__c,
+                                Account_Type_Ac1__c, Account_Type_Ac2__c, Account_Type_Ac3__c,
+                                Balance_Ac1__c, Balance_Ac2__c,Balance_Ac3__c,
+                               	Make_Mo1__c, Make_Mo2__c, Make_Mo3__c,
+                                Model_Mo1__c, Model_Mo2__c, Model_Mo3__c,
+                                Year_of_manufacture_Mo1__c, Year_of_manufacture_Mo2__c, Year_of_manufacture_Mo3__c,
+                                Present_value_Mo1__c, Present_value_Mo2__c, Present_value_Mo3__c,
+                               	Balance_AL1__c, Balance_AL2__c, Balance_AL3__c,
+                                Details_AL1__c, Details_AL2__c, Details_AL3__c,
+                                Financial_Institution_Name_hoB1__c, Financial_Institution_Name_hoB2__c, Financial_Institution_Name_hoB3__c,
+                                Property_type_hoB1__c, Property_type_hoB2__c, Property_type_hoB3__c,
+                               	Orignal_loan_Amount_hoB1__c, 	Orignal_loan_Amount_hoB2__c,	Orignal_loan_Amount_hoB3__c,
+                                Amount_owing_now_hoB1__c, 	Amount_owing_now_hoB2__c,	Amount_owing_now_hoB3__c,
+                                Monthly_repay_Home1__c, 	Monthly_repayment_amount_H_I_borrow_2__c, 	Monthly_repayment_amount_H_I_borrow_3__c
+                                FROM Contact WHERE Id=:oppContactID LIMIT 1];
+        
+        List<String> headerListVals = new List<String>{ 
+            											'Name of Contact',
+            											'Address'  , 'Ownership type 1', 'Estimated Market value',
+            											'Address 1', 'Ownership type 2', 'Estimated Market value 1',            
+            											'Address 2', 'Ownership type 3', 'Estimated Market value 2',
+                                                        'Address (Home/Investment Properties 1)', 'Present Value (Home/Investment 1)','Property type (Home/Investment 1)',
+                                                        'Address (Home/Investment Properties 2)', 'Present Value (Home/Investment 2)','Property type (Home/Investment 2)',
+                                                        'Address (Home/Investment Properties 3)', 'Present Value (Home/Investment 3)','Property type (Home/Investment 3)',
+                                                        'Account Type (Accounts 1)','Balance (Accounts 1)',
+                                                        'Account Type (Accounts 2)','Balance (Accounts 2)',
+                                                        'Account Type (Accounts 3)','Balance (Accounts 3)',
+                                                        'Make (Motor Vehicle 1)', 'Model (Motor Vehicle 1)', 'Year of manufacture (Motor Vehicle 1)', 'Present value (Motor vehicle 1)',
+                                                        'Make (Motor Vehicle 2)', 'Model (Motor Vehicle 2)', 'Year of manufacture (Motor Vehicle 2)', 'Present value (Motor vehicle 2)', 
+                                                        'Make (Motor Vehicle 3)', 'Model (Motor Vehicle 3)', 'Year of manufacture (Motor Vehicle 3)', 'Present value (Motor vehicle 3)',
+                                                        'Details (All other assets 1)', 'Balance (All other assets 1)',
+                                                        'Details (All other assets 2)', 'Balance (All other assets 2)',
+                                                        'Details (All other assets 3)', 'Balance (All other assets 3)',
+                                                        'Financial Institution Name(H/I borrow 1)', 'Property type (H/I borrow 1)', 'Original loan Amount (H/I borrow 1)',
+                                                        'Amount owing now (H/I borrow 1)', 'Monthly repayment amount (H/I borrow 1)',
+                                                        
+                                                        'Financial Institution Name(H/I borrow 2)', 'Property type (H/I borrow 2)', 'Original loan Amount (H/I borrow 2)',
+                                                        'Amount owing now (H/I borrow 2)', 'Monthly repayment amount (H/I borrow 2)',
+                                                            
+                                                        'Financial Institution Name(H/I borrow 3)', 'Property type (H/I borrow 3)', 'Original loan Amount (H/I borrow 3)',
+                                                        'Amount owing now (H/I borrow 3)', 'Monthly repayment amount (H/I borrow 3)'
+                                                            
+                                                        ,'List ends, Add new values'
+            										  };
+            
+            
+         //headerListVals indexing
+         // 0 	- Name
+         // 1 	- Address 1
+         // 2 	- OwnerShip type 1
+         // .
+         // .
+         // 10	- Estimated Market value 2
+         // 19 - Property type (Home/Investment 3)
+         // Use this value in itr variable to get the values ; just for increasing readability at one place. 
+         // Include column as column number 1 or 2 
+        List<ContactAccountDetailsUnit> lstConAcc = new List<ContactAccountDetailsUnit>();
+        
+        List<List<ContactAccountDetailsUnit>> MainListToReturn = new List<List<ContactAccountDetailsUnit>>();
+        
+        
+        
+        //Contact c = lstCon[0];
+        Contact c = c_single;
+        //New lines start
+        
+        Snapshot__c newSnap = new Snapshot__c(Name=OpportunityName+' Snap', Contact_Name__c = c.Name,
+                                              Address_1__c = c.Address__c, Address_2__c = c.Address_1__c, Address_3__c = c.Address_2__c,
+                                              Ownership_type_1__c = c.Ownership_type_1__c, Ownership_type_2__c= c.Ownership_type_2__c, Ownership_type_3__c = c.Ownership_type_3__c,
+                                              Estimated_Market_value_1__c = c.Estimated_Market_value__c, Estimated_Market_value_2__c = c.Estimated_Market_value_1__c, 
+                                              Estimated_Market_value_3__c = c.Estimated_Market_value_2__c,
+                                              Address_ho1__c = c.Address_ho1__c , Address_ho2__c = c.Address_ho2__c, Address_ho3__c = c.Address_ho3__c,
+                                              Account_Type_Ac1__c = c.Account_Type_Ac1__c, Account_Type_Ac2__c= c.Account_Type_Ac2__c, Account_Type_Ac3__c= c.Account_Type_Ac3__c,
+                                              Balance_Ac1__c = c.Balance_Ac1__c, Balance_Ac2__c= c.Balance_Ac2__c, Balance_Ac3__c = c.Balance_Ac3__c,
+                                              Property_Type_ho1__c = c.Property_Type_ho1__c , Property_Type_ho2__c = c.Property_Type_ho2__c ,
+                                              Property_Type_ho3__c = c.Property_Type_ho3__c,
+                                              Present_Value_ho1__c = c.Present_Value_ho1__c, 	Present_Value_ho2__c = c.Present_Value_ho2__c, 
+                                              Present_Value_ho3__c= c.Present_Value_ho3__c,
+                                              Make_Mo1__c = c.Make_Mo1__c, Make_Mo2__c=c.Make_Mo2__c, Make_Mo3__c= c.Make_Mo3__c,
+                                              Model_Mo1__c = c.Model_Mo1__c, Model_Mo2__c = c.Model_Mo2__c, Model_Mo3__c = c.Model_Mo3__c,
+                                              Year_of_manufacture_Mo1__c = c.Year_of_manufacture_Mo1__c, Year_of_manufacture_Mo2__c = c.Year_of_manufacture_Mo2__c,
+                                              Year_of_manufacture_Mo3__c = c.Year_of_manufacture_Mo3__c,
+                                              Present_value_Mo1__c = c.Present_value_Mo1__c , Present_value_Mo2__c = c.Present_value_Mo2__c, Present_value_Mo3__c=c.Present_value_Mo3__c,
+                                              Balance_AL1__c = c.Balance_AL1__c, Balance_AL2__c=c.Balance_AL2__c, Balance_AL3__c=c.Balance_AL3__c,
+                                              Details_AL1__c=c.Details_AL1__c, Details_AL2__c=c.Details_AL2__c, Details_AL3__c=c.Details_AL3__c,
+                                              Financial_Institution_Name_hoB1__c = c.Financial_Institution_Name_hoB1__c, 
+                                              Financial_Institution_Name_hoB2__c = c.Financial_Institution_Name_hoB2__c, 
+                                              Financial_Institution_Name_hoB3__c = c.Financial_Institution_Name_hoB3__c,
+                                              Property_type_hoB1__c = c.Property_Type_ho1__c, Property_type_hoB2__c = c.Property_type_hoB2__c, 
+                                              Property_type_hoB3__c = c.Property_type_hoB3__c,
+                                              Orignal_loan_Amount_hoB1__c = c.Orignal_loan_Amount_hoB1__c, 	
+                                              Orignal_loan_Amount_hoB2__c = c.Orignal_loan_Amount_hoB2__c,	
+                                              Orignal_loan_Amount_hoB3__c = c.Orignal_loan_Amount_hoB3__c,
+                                              Amount_owing_now_hoB1__c = c.Amount_owing_now_hoB1__c,
+                                              Amount_owing_now_hoB2__c =c.Amount_owing_now_hoB2__c,	Amount_owing_now_hoB3__c = c.Amount_owing_now_hoB3__c,
+                                              Monthly_repay_Home1__c = c.Monthly_repay_Home1__c, 
+                                              Monthly_repayment_amount_H_I_borrow_2__c = c.Monthly_repayment_amount_H_I_borrow_2__c, 	
+                                              Monthly_repayment_amount_H_I_borrow_3__c =c.Monthly_repayment_amount_H_I_borrow_3__c,
+                                              
+                                              OpportunityId__c = oppId
+                                             );
+        
+        
+        //If everytime this is inserted there will be a lot of redundant data.
+        //insert newSnap;
+        
+        integer itr = 0;
+        //New Lines end
+        List<ContactAccountDetailsUnit> Description = new List<ContactAccountDetailsUnit>();
+        if(newSnap.Name != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = 'SnapShot'; 
+            cad.rowData = newSnap.Name;  
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            Description.add(cad);
+        }
+        if(newSnap.Contact_Name__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = 'Name of Contact'; 
+            cad.rowData = newSnap.Contact_Name__c;  
+            Description.add(cad);
+        }
+        if(Description.size() > 0) {MainListToReturn.add(Description);}
+        itr++;
+        //Other 1
+        if(newSnap.Address_1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr];
+            cad.rowData = newSnap.Address_1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad); 
+        }
+        itr++;
+        if(newSnap.Ownership_type_1__c != '')
+        {            
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Ownership_type_1__c;  
+           
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);   
+        }
+        itr++;
+          if(String.valueOf(newSnap.Estimated_Market_value_1__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Estimated_Market_value_1__c);  
+           
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        
+        //Other 2
+         if(c.Address_1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Address_1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad); 
+        }
+        itr++;
+        if(newSnap.Ownership_type_2__c != '')
+        {            
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Ownership_type_2__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);   
+        }
+        itr++;
+          if(String.valueOf(newSnap.Estimated_Market_value_1__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Estimated_Market_value_1__c); 
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        
+        //Other 3
+        if(newSnap.Address_2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Address_2__c;  
+           
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad); 
+        }
+        itr++;
+        if(newSnap.Ownership_type_3__c != '')
+        {            
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Ownership_type_3__c;  
+          
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);   
+        }
+        itr++;
+        if(String.valueOf(newSnap.Estimated_Market_value_2__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Estimated_Market_value_2__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        
+		/* if(true)
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            
+            cad.borderSet = true;
+            cad.borderData = 'Home Investment Proprerties';
+            lstConAcc.add(cad);
+        }
+        //Home Investment Proprerties
+        itr++;*/
+        if(newSnap.Address_ho1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Address_ho1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Present_Value_ho1__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Present_Value_ho1__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(newSnap.Property_Type_ho1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Property_Type_ho1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        //type 2
+        itr++;
+        if(newSnap.Address_ho2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Address_ho2__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Present_Value_ho2__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Present_Value_ho2__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(newSnap.Property_Type_ho2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Property_Type_ho2__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        //Type 3
+        itr++;
+        if(newSnap.Address_ho3__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Address_ho3__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Present_Value_ho3__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Present_Value_ho3__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(newSnap.Property_Type_ho3__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Property_Type_ho3__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        
+        //Account (Bank, Credit, Union Building Soc.etc)
+        //Type 1
+        itr++;
+        if(newSnap.Account_Type_Ac1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Account_Type_Ac1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Balance_Ac1__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Balance_Ac1__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        //Type 2
+        itr++;
+        if(newSnap.Account_Type_Ac2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Account_Type_Ac1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Balance_Ac2__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Balance_Ac2__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        //Type 3
+        itr++;
+        if(newSnap.Account_Type_Ac3__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Account_Type_Ac1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Balance_Ac3__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Balance_Ac3__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        
+  
+        //Motor Vehicle
+        //Type 1
+        itr++;
+        if(newSnap.Make_Mo1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Make_Mo1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(newSnap.Model_Mo1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Model_Mo1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(newSnap.Year_of_manufacture_Mo1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Year_of_manufacture_Mo1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Present_value_Mo1__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Present_value_Mo1__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        //Type 2
+        itr++;
+         if(newSnap.Make_Mo2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Make_Mo2__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(newSnap.Model_Mo2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Model_Mo2__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(newSnap.Year_of_manufacture_Mo2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Year_of_manufacture_Mo2__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Present_value_Mo2__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Present_value_Mo2__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        //Type 3
+        itr++;
+         if(newSnap.Make_Mo3__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Make_Mo3__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(newSnap.Model_Mo3__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Model_Mo3__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(newSnap.Year_of_manufacture_Mo3__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Year_of_manufacture_Mo3__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Present_value_Mo3__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Present_value_Mo3__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        //END
+        //All other Assets
+        /*Balance_AL1__c = c.Balance_AL1__c, Balance_AL2__c=c.Balance_AL2__c, Balance_AL3__c=c.Balance_AL3__c,
+                                              Details_AL1__c=c.Details_AL1__c, Details_AL2__c=c.Details_AL2__c, Details_AL3__c=c.Details_AL3__c,*/
+        //Type 1
+        itr++;
+        if(newSnap.Details_AL1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Details_AL1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Balance_AL1__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Balance_AL1__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        //Type 2
+         if(newSnap.Details_AL2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Details_AL2__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Balance_AL2__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Balance_AL2__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        //Type 3
+         if(newSnap.Details_AL3__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Details_AL3__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        if(String.valueOf(newSnap.Balance_AL3__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Balance_AL3__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        //END
+        //Home investment property loan
+        /*Financial_Institution_Name_hoB1__c, Financial_Institution_Name_hoB2__c, Financial_Institution_Name_hoB3__c,
+                                Property_type_hoB1__c, Property_type_hoB2__c, Property_type_hoB3__c,
+                               	Orignal_loan_Amount_hoB1__c, 	Orignal_loan_Amount_hoB2__c,	Orignal_loan_Amount_hoB3__c,
+                                Amount_owing_now_hoB1__c, 	Amount_owing_now_hoB2__c,	Amount_owing_now_hoB3__c,
+                                Monthly_repay_Home1__c, 	Monthly_repayment_amount_H_I_borrow_2__c, 	Monthly_repayment_amount_H_I_borrow_3__c
+                              */
+        //Type 1
+         if(newSnap.Financial_Institution_Name_hoB1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Financial_Institution_Name_hoB1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(newSnap.Property_type_hoB1__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Property_type_hoB1__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(String.valueOf(newSnap.Orignal_loan_Amount_hoB1__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Orignal_loan_Amount_hoB1__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(String.valueOf(newSnap.Amount_owing_now_hoB1__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Amount_owing_now_hoB1__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(String.valueOf(newSnap.Monthly_repay_Home1__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Monthly_repay_Home1__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        //type 2
+           if(newSnap.Financial_Institution_Name_hoB2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Financial_Institution_Name_hoB2__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(newSnap.Property_type_hoB2__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Property_type_hoB2__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(String.valueOf(newSnap.Orignal_loan_Amount_hoB2__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Orignal_loan_Amount_hoB2__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(String.valueOf(newSnap.Amount_owing_now_hoB2__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Amount_owing_now_hoB2__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(String.valueOf(newSnap.Monthly_repayment_amount_H_I_borrow_2__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Monthly_repayment_amount_H_I_borrow_2__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+        //type 3
+           if(newSnap.Financial_Institution_Name_hoB3__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Financial_Institution_Name_hoB3__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(newSnap.Property_type_hoB3__c != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = newSnap.Property_type_hoB3__c;  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(String.valueOf(newSnap.Orignal_loan_Amount_hoB3__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Orignal_loan_Amount_hoB3__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(String.valueOf(newSnap.Amount_owing_now_hoB3__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Amount_owing_now_hoB3__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        itr++;
+         if(String.valueOf(newSnap.Monthly_repayment_amount_H_I_borrow_3__c) != '')
+        {
+            ContactAccountDetailsUnit cad = new ContactAccountDetailsUnit();
+            cad.rowHeader = headerListVals[itr]; 
+            cad.rowData = String.valueOf(newSnap.Monthly_repayment_amount_H_I_borrow_3__c);  
+            
+            System.debug('head: '+cad.rowHeader + 'Data: ' + cad.rowData);
+            lstConAcc.add(cad);
+        }
+        //itr++;
+        //end
+        //New Snap Included
+        return MainListToReturn;
+    }    
+}
