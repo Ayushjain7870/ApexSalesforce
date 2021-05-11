@@ -1,0 +1,47 @@
+//Integrate JavaScript with HTML to get input from user...
+<!--HTML-->
+<html>
+  
+<body style="text-align:center;">
+ 
+  
+  
+    First Name:
+    <input type="text" id="Fname" value="Mickey"><br/>
+    Last Name:
+    <input type="text" id="Lname" value="Mouse"><br/>
+    Age:
+    <input type="text" id="Age" value="28"><br/>
+    <button type="button" 
+            onclick="reader()">
+      Submit
+  </button>
+    <p id="demo"></p>
+  
+  
+</body>
+  
+</html>
+<!--END-->
+
+//JavaScript
+
+function reader()
+{
+
+  var Fname = document.getElementById("Fname").value;
+   var Lname = document.getElementById("Lname").value;
+   var Age = document.getElementById("Age").value;
+  var fullInfo = 'Name is='+ Fname + ' '+ Lname + ' ' + Age;
+  document.getElementById("demo").innerHTML = fullInfo;
+  if(Fname !== '')
+  {
+    console.log(fullInfo);
+  }
+  else
+  {
+    console.log('Name is null');
+  }
+}                          
+
+//END
