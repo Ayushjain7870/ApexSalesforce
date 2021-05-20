@@ -1,0 +1,235 @@
+//Test class - InitialLoanRequestController_test
+public class InitialLoanRequestController_THN 
+{
+    //Account, Contact , Opportunity objects
+    public Account inAcc { get; set; }
+    public Contact inCon { get; set; }
+    public Opportunity inOpp { get; set; }
+    public Lead inLead { get; set; }
+    //Reuired fields for above objects
+    public String fName { get; set; }
+    public String lName { get; set; }
+    public String tradingName { get; set; }
+    public String ABN{get;set;}
+    
+    public String fundingRequired { get; set; }
+    public String trailFees { get; set; }
+    public String mngFees { get; set; }
+    
+    //For sending link of rentRollLoanForm
+    public String email { get; set; }
+    public String mobile { get; set; }
+    public String guid { get; set; }
+    //public String loanType { get; set; }
+    
+    public String EntityType { get; set; } //New type
+    
+    public String pageMSG { get; set; }
+    public Boolean displayForm { get; set; }
+    public Boolean displayThankYou { get; set; }
+    public String aggGroup { get; set; }
+    public String phnNumber { get; set; }
+    public String aggOpp { get; set; }
+    public String pleaseSelect { get; set; }
+    
+    //Referrer information 
+    public String referrer { get; set; }
+    public String refFirstName { get; set; }
+    public String refLastName { get; set; }
+    public String refEmail { get; set; }
+    public String refCompany { get; set; }
+    public String refNumber { get; set; }
+    public string source { get; set; }
+    public string gclid { get; set; }
+    public string utm_source { get; set; }
+    public string utm_medium { get; set; }
+    
+    
+    
+    public InitialLoanRequestController_THN()
+    {
+        inAcc = new Account();
+        inCon = new Contact();
+        inOpp = new Opportunity();
+        inLead = new Lead(); 
+        
+        displayForm = true;
+        displayThankYou = false;
+        /*
+        source = ApexPages.currentPage().getParameters().get('sr'); 
+        gclid = ApexPages.currentPage().getParameters().get('gclid'); 
+        utm_source = ApexPages.currentPage().getParameters().get('utm_source'); 
+        utm_medium = ApexPages.currentPage().getParameters().get('utm_medium'); 
+        
+        inlead.LeadSource = getLeadSource();
+        */
+        String isQuickLead = apexpages.currentpage().getparameters().get('id'); 
+        
+        if(isQuickLead != null){
+            Lead leadRecord = [SELECT Firstname,Lastname,MobilePhone,Email,Company
+                               FROM Lead
+                               WHERE id=:isQuickLead LIMIT 1];
+            inLead = leadRecord;
+            getAlreadyFilledValues(leadRecord);
+        }
+        
+    }
+    
+    
+    public void getAlreadyFilledValues(Lead leadRecord){
+        if(leadRecord != null){
+            if(leadRecord.Firstname != null)
+                fName = leadRecord.Firstname;
+            if(leadRecord.lastName != null)
+                lname = leadRecord.LastName;
+            if(leadRecord.Company != null)
+                tradingName = leadRecord.Company;
+            if(leadRecord.Email != null)
+                email = leadRecord.email;
+            if(leadRecord.MobilePhone != null)
+                phnNumber = leadRecord.MobilePhone;
+        }
+    }
+    
+    
+    public void continueAction()
+    { 
+        pageMSG = '';
+        
+        inLead.Company = tradingName;
+        inLead.Email = email;
+        // inLead.LeadSource = 'Web';
+        inLead.Guid__c = getUUID();
+        inLead.FirstName = fName;
+        inLead.LastName = lName;
+        
+        inLead.Funding_Required__c = Decimal.valueOf(fundingRequired.replace(',', '')); 
+        inLead.Status = 'New';
+        inLead.Entity_Type__c = EntityType;
+        
+        //Set record type
+        /*Sole traded 
+		Partner 
+		Company*/
+        if(EntityType == 'Sole traded'){
+            Id trailBook = SObjectType.Lead.getRecordTypeInfosByDeveloperName().get('Trail_Book_lead').getRecordTypeId();
+            if(trailBook != null)
+                inLead.RecordTypeId = trailBook;
+                inLead.Agg_or_dealer__c = 'Enter aggregator group';
+        }else if(EntityType == 'Partner'){
+            Id rentRoll = SObjectType.Lead.getRecordTypeInfosByDeveloperName().get('Rent_Roll_lead').getRecordTypeId();
+            if(rentRoll != null)
+                inLead.RecordTypeId = rentRoll;
+        }else if(EntityType == 'Company'){
+            Id planning = SObjectType.Lead.getRecordTypeInfosByDeveloperName().get('Planning_lead').getRecordTypeId();
+            if(planning != null)
+                inLead.RecordTypeId = planning;
+                inLead.Agg_or_dealer__c = 'Enter dealer group';
+        }
+        
+        inLead.Primary_contact__c = true;
+        if(aggOpp != null)
+            inLead.Aggregator_group__c = aggOpp;
+        if(aggGroup != null)
+            inLead.Aggrega__c = aggGroup; 
+        if(phnNumber != null)
+            inLead.Phone = phnNumber;
+        
+        if(trailFees != null)
+            inLead.Trail_Fees_received_per_month__c = Decimal.valueOf(trailFees.replace(',', ''));
+        if(mngFees != null)
+            inLead.Management_Fees_received_per_month__c  = Decimal.valueOf(mngFees.replace(',', ''));
+        
+        if(refFirstName != null)
+            inLead.FirstName__c = refFirstName;
+        if(refLastName != null)
+            inLead.Last_name__c = refLastName;
+        if(refEmail != null)
+            inLead.rEmail__c = refEmail;
+        if(refCompany != null)
+            inLead.rCompany__c = refCompany;
+        if(refNumber != null)
+            inLead.rMobile_number__c = refNumber;
+        if(refNumber != null)
+            inLead.Phone = refNumber;
+        if(refNumber != null)
+            inLead.MobilePhone = refNumber;
+        if(pleaseSelect != null)
+            inLead.Agg_or_dealer__c = pleaseSelect;
+        
+       /* try{
+            upsert inLead;    
+        }
+        catch(Exception e){
+            system.debug('Exception '+ e.getMessage());
+            system.debug('Exception '+ e.getLineNumber());
+        }
+        */
+        
+        displayForm = false;
+        
+    }
+    
+    public void displayThankYou()
+    {
+        displayForm = false;
+        displayThankYou = true;
+    }
+    
+    public static String getUUID()
+    {
+        Blob b = Crypto.GenerateAESKey(128);
+        String h = EncodingUtil.ConvertTohex(b);
+        String guid = h.SubString(0,8)+ '-' + h.SubString(8,12) + '-' + h.SubString(12,16) + '-' + h.SubString(16,20) + '-' + h.substring(20);
+        system.debug(guid);
+        return guid;
+    }
+    /*
+    public String getLeadSource() {
+        String leadSource = 'web';
+        
+        Map<String, String> sourceMap = new Map<String, String>();
+        sourceMap.put('sms', 'SMS');
+        sourceMap.put('edm', 'EDM');
+        sourceMap.put('reloan', 'Reloan');
+        sourceMap.put('gsp', 'GSP');
+        sourceMap.put('fb_pd', 'Facebook Paid Ads');
+        sourceMap.put('vimeo', 'Vimeo');
+        sourceMap.put('youtube', 'YouTube');
+        sourceMap.put('gplus', 'Google Plus');
+        sourceMap.put('linkedin', 'Linked In');
+        sourceMap.put('fb_pr', 'Facebook Unpaid PR');
+        sourceMap.put('bform', 'Bo2Former');
+        sourceMap.put('cform', 'Bo2Current');
+        sourceMap.put('webprom','Website Promotion');
+        
+        List<Lead_Source__mdt> lsmt_list = new List<Lead_Source__mdt>();
+        lsmt_list = [SELECT Lead_Source_Value__c,sr_code__c,Dependent_Field_Value__c FROM Lead_Source__mdt];
+        
+        system.debug(lsmt_list.size());
+        
+        for(Lead_Source__mdt lsmt : lsmt_list){
+            system.debug(lsmt.sr_code__c);system.debug( lsmt.Lead_Source_Value__c);
+            sourceMap.put(lsmt.sr_code__c,lsmt.Lead_Source_Value__c);    
+        }
+        
+        
+        if(String.isNotBlank(source)) {
+            if(sourceMap.containsKey(source.toLowerCase())) {
+                
+                leadSource = sourceMap.get(source.toLowerCase());
+            }
+        } else {
+            if(String.isNotBlank(gclid)) {
+                leadSource = 'Google Adwords';
+            } else {
+                if(utm_medium == 'cpc' && utm_source == 'google') {
+                    leadSource = 'Google Display Ads';
+                } else if(utm_source == 'bing') {
+                    leadSource = 'Bing Ads';
+                }
+            }            
+        }
+        return leadSource;
+    }*/
+}
